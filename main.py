@@ -1,14 +1,8 @@
 from fastapi import FastAPI
-from api.routes import router
-from db.database import engine
-from db.models import Base
+from db.database import init_db
+from api.routes import router as expense_router
 
 app = FastAPI()
+init_db()
 
-Base.metadata.create_all(bind = engine)
-app.include_router(router)
-
-
-@app.get("/")
-def home():
-    return {"message": "Expense AI Agent Running"}
+app.include_router(expense_router, prefix="/expense")
