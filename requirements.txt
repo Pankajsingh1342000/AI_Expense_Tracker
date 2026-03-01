@@ -1,6 +1,5 @@
 fastapi
-uvicorn
-sqlalchemy
-pydantic
+uvicorn[standard]
 python-dotenv
-openai
+sqlalchemy
+requests
