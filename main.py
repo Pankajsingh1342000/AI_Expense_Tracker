@@ -11,4 +11,4 @@ app.include_router(router)
 
 @app.get("/")
 def home():
-    return {"messege": "Expense AI Agent Running"}
+    return {"message": "Expense AI Agent Running"}

@@ -6,5 +6,5 @@ router = APIRouter()
 
 @router.post("/ask")
 def ask_agent(request: QueryRequest):
-    resposne = process_query(request.query)
-    return {"response": resposne}
+    response = process_query(request.query)
+    return {"response": response}
