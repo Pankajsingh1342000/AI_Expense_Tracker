@@ -1,4 +1,7 @@
 from pydantic import BaseModel
 
-class QueryRequest(BaseModel):
-    query: str
+class AskRequest(BaseModel):
+    command: str
+
+class AskResponse(BaseModel):
+    result: dict

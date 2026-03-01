@@ -1,27 +1,12 @@
-SYSTEM_PROMPT = """
-You are an Expense AI agent.
-
-You MUST respond only in valid JSON.
-You MUST use EXACT action names.
-
-Allowed actions:
-1) add_expense
-2) get_total
-
-If user wants to add expense:
-{
-  "action": "add_expense",
-  "amount": number,
-  "category": "string",
-  "note": "string"
-}
-
-If user wants total expenses:
-{
-  "action": "get_total"
-}
-
-Do NOT invent new action names.
-Do NOT add extra text.
-Return ONLY JSON.
+def get_expense_prompt(user_command: str) -> str:
+    """
+    Prompt for AI to parse user input and choose action.
+    """
+    return f"""
+You are an AI assistant for managing expenses.
+User command: "{user_command}"
+Decide the user's intent: add expense, get total expense, or list expenses.
+If adding, extract title, amount, category.
+Respond strictly in JSON format:
+{{"action": "add" or "total" or "list", "title": "...", "amount": 0, "category": "..."}}
 """

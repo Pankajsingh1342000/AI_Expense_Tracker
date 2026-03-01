@@ -1,7 +1,8 @@
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, Float
-from db.database import Base
+Base = declarative_base()
 
 class Expense(Base):
     __tablename__ = "expenses"
@@ -10,4 +11,4 @@ class Expense(Base):
     title = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
     category = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.datetime.timezone.utc)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
