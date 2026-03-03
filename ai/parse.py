@@ -18,15 +18,17 @@ def parse_user_command(user_command: str) -> dict:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a financial assistant."},
+            {
+                "role": "system",
+                "content": "You are a financial assistant. Always respond in valid JSON only. Do not include explanations."
+            },
             {"role": "user", "content": prompt}
         ],
-        temperature=0
+        temperature=0,
+        response_format={"type": "json_object"}
     )
 
-    content = response.choices[0].message.content.strip()
-
     try:
-        return json.loads(content)
-    except:
+        return json.loads(response.choices[0].message.content)
+    except Exception:
         return {"action": "unknown"}
