@@ -3,11 +3,12 @@ from models.expense import Expense
 from sqlalchemy import func
 from datetime import datetime
 
-def add_expense(db: Session, user_id: int, title: str, amount: float, category: str):
+def add_expense(db: Session, user_id: int, title: str, amount: float, category: str, description: str = None):
     expense = Expense(
         title=title,
         amount=amount,
         category=category,
+        description=description,
         user_id=user_id
     )
     db.add(expense)
