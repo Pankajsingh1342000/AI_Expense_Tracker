@@ -30,3 +30,13 @@ def category_total(db: Session, user_id: int):
     ).filter(
         Expense.user_id == user_id
     ).group_by(Expense.category).all()
+
+def category_breakdown(db: Session, user_id: int):
+    return db.query(
+        Expense.category,
+        func.sum(Expense.amount)
+    ).filter(
+        Expense.user_id == user_id
+    ).group_by(
+        Expense.category
+    ).all()
