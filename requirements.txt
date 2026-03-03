@@ -1,5 +1,9 @@
 fastapi
 uvicorn[standard]
-python-dotenv
 sqlalchemy
-requests
+psycopg2-binary
+python-dotenv
+passlib[bcrypt]
+python-jose
+pydantic
+openai

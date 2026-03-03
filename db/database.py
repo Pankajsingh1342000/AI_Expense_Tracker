@@ -1,15 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base
-import os
-from dotenv import load_dotenv
+from core.config import DATABASE_URL
 
-load_dotenv()
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}  # Needed for SQLite
+)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./expenses.db")
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-def init_db():
-    Base.metadata.create_all(bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
