@@ -1,17 +1,35 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_serializer
 from datetime import datetime
+from typing import Optional
+from decimal import Decimal
 
-class ExpenseCreate(BaseModel):
+class ExpenseBase(BaseModel):
     title: str
-    amount: float
+    amount: Decimal
     category: str
+    description: Optional[str] = None
+    date: Optional[datetime] = None
 
-class ExpenseResponse(BaseModel):
+class ExpenseCreate(ExpenseBase):
+    pass
+
+class ExpenseUpdate(BaseModel):
+    title: Optional[str] = None
+    amount: Optional[Decimal] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+
+class ExpenseResponse(ExpenseBase):
     id: int
-    title: str
-    amount: float
-    category: str
-    created_at: datetime
+    date: datetime
+    user_id: int
 
-    class Config:
-        from_attributes = True
+    @field_serializer('amount')
+    def serialize_amount(self, value: Decimal) -> str:
+        """Custom serializer to convert Decimal amount to a string with two decimal places."""
+
+        return str(value.quantize(Decimal('0.01')))
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )

@@ -1,7 +1,9 @@
 import json
-from openai import OpenAI
-from ai.prompt import get_expense_prompt
 import os
+from openai import OpenAI
+from pydantic import ValidationError
+from ai.prompt import get_expense_prompt
+from schemas.ai import AIResponse
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
@@ -10,9 +12,8 @@ client = OpenAI(
 
 def parse_user_command(user_command: str) -> dict:
     """
-    Sends user command to LLM and extracts structured JSON.
+    Sends user command to LLM, extracts structured JSON, and validates it.
     """
-
     prompt = get_expense_prompt(user_command)
 
     response = client.chat.completions.create(
@@ -29,6 +30,15 @@ def parse_user_command(user_command: str) -> dict:
     )
 
     try:
-        return json.loads(response.choices[0].message.content)
-    except Exception:
-        return {"action": "unknown"}
+        # First, load the string into a Python dict
+        raw_json = json.loads(response.choices[0].message.content)
+        # Then, validate it with Pydantic
+        validated_data = AIResponse(**raw_json)
+        # Return it as a dictionary
+        return validated_data.model_dump()
+    except (json.JSONDecodeError, ValidationError) as e:
+        print(f"ERROR: LLM output failed validation. Error: {e}. Output: {response.choices[0].message.content}")
+        return {"action": "unknown", "title": "Error in parsing command"}
+    except Exception as e:
+        print(f"An unexpected error occurred during parsing: {e}")
+        return {"action": "unknown", "title": "Unexpected error"}
