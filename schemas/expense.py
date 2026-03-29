@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_serializer
+from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 from datetime import datetime
 from typing import Optional
 from decimal import Decimal
@@ -9,6 +9,20 @@ class ExpenseBase(BaseModel):
     category: str
     description: Optional[str] = None
     date: Optional[datetime] = None
+
+    @field_validator('amount')
+    @classmethod
+    def amount_must_be_positive(cls, v: Decimal) -> Decimal:
+        if v <= 0:
+            raise ValueError('Amount must be positive')
+        return v
+
+    @field_validator('title')
+    @classmethod
+    def title_must_not_be_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError('Title cannot be empty')
+        return v.strip()
 
 class ExpenseCreate(ExpenseBase):
     pass

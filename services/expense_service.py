@@ -6,14 +6,15 @@ from typing import List, Dict, Any
 from decimal import Decimal
 
 def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
-    
+    """
+    Adds an expense with intelligent categorization fallback.
+    """
     TITLE_TO_CATEGORY_MAP = {
         "rapido": "transport", "uber": "transport", "ola": "transport",
         "metro": "transport", "zomato": "food", "swiggy": "food",
-        "coffee": "beverages",
+        "coffee": "beverages", "starbucks": "beverages",
         "blinkit": "groceries", "zepto": "groceries",
-        "groceries": "food",
-        "pizza": "food",
+        "groceries": "food", "pizza": "food", "dinner": "food", "lunch": "food"
     }
 
     CATEGORY_NORMALIZATION_MAP = {
@@ -24,17 +25,26 @@ def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
     }
     
     title = expense_data.get("title")
+    if not title:
+        raise ValueError("Expense title is required")
+
     category = expense_data.get("category")
 
+    # 1. Normalize provided category
     if category:
-        normalized_category = CATEGORY_NORMALIZATION_MAP.get(category.lower(), category.lower())
-        expense_data["category"] = normalized_category
+        category = CATEGORY_NORMALIZATION_MAP.get(category.lower(), category.lower())
+    
+    # 2. If no category or LLM gave "misc", try title-based lookup
+    if not category or category == "misc":
+        category = TITLE_TO_CATEGORY_MAP.get(title.lower(), "misc")
 
-    elif title:
-        expense_data["category"] = TITLE_TO_CATEGORY_MAP.get(title.lower(), "misc")
+    expense_data["category"] = category
     
     if expense_data.get('amount') is not None:
-        expense_data['amount'] = Decimal(str(expense_data['amount']))
+        amount = Decimal(str(expense_data['amount']))
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        expense_data['amount'] = amount
 
     allowed_keys = {"title", "amount", "category", "description", "date"}
     

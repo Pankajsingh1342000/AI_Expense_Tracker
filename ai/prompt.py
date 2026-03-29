@@ -35,216 +35,143 @@ AVAILABLE ACTIONS
 INTENT DETECTION RULES
 --------------------------------
 
-If user records an expense
-
-Examples:
+If the user records an expense:
 "spent 200 on food"
 "bought coffee for 50"
 "bought groceries for 120"
 
-→ action = "add"
+Return:
+action = "add"
+Extract title, amount, category when present.
 
-Extract:
-title
-amount
-category
-
-
-If user asks to see expenses
-
-Examples:
+If the user asks to see expenses:
 "show my expenses"
 "list all expenses"
 
-→ action = "list"
+Return:
+action = "list"
 
-
-If user asks total spending
-
-Examples:
+If the user asks total spending:
 "how much did I spend"
 "total expenses"
 
-→ action = "total"
+Return:
+action = "total"
 
-
-If user asks category totals
-
-Examples:
+If the user asks category totals:
 "how much did I spend on food"
 
-→ action = "category"
-
+Return:
+action = "category"
 
 --------------------------------
 BUDGET RULES
 --------------------------------
 
-If user sets a budget
-
-Example:
 "set food budget to 5000"
+-> action = "set_budget"
 
-→ action = "set_budget"
-
-Extract:
-category
-amount
-
-
-If user updates a budget
-
-Examples:
 "increase food budget to 7000"
 "update travel budget to 3000"
+-> action = "update_budget"
 
-→ action = "update_budget"
-
-Extract:
-category
-amount
-
-
-If user deletes a budget
-
-Examples:
 "delete food budget"
 "remove travel budget"
+-> action = "delete_budget"
 
-→ action = "delete_budget"
-
-Extract:
-category
-
-
-If user asks for a specific budget
-
-Examples:
 "what is my food budget"
 "travel budget status"
+-> action = "budget_status"
 
-→ action = "budget_status"
-
-Extract:
-category
-
-
-If user asks for all budgets
-
-Examples:
 "any budget"
 "show budgets"
 "list budgets"
 "what budgets do I have"
+-> action = "budget_overview"
 
-→ action = "budget_overview"
-
-
-If user asks about budget warnings
-
-Examples:
 "any budget warning"
 "am I near my budget limit"
-
-→ action = "budget_warning"
-
+-> action = "budget_warning"
 
 --------------------------------
 FILTERING
 --------------------------------
 
-Example:
 "show food expenses"
+-> action = "filter"
 
-→ action = "filter"
-
-Extract:
-category
-
-Example:
 "show expenses above 500"
+-> action = "filter"
 
-→ action = "filter"
-
-Optional fields:
+Optional filter fields:
 category
 min_amount
 max_amount
-
 
 --------------------------------
 EXPENSE UPDATE
 --------------------------------
 
-Example:
+Examples:
 "update lunch expense to 300"
+"update pizza amount to 300 and category to food"
+"update expense id 1 to 300"
+"change expense id 1 amount to 300"
 
-→ action = "update"
+Return:
+action = "update"
 
-Extract:
-id OR title
-
-Optional:
-amount
-category
-title
-
+Rules:
+- Use `id` when the command mentions an expense id.
+- Use `title` when the command names an expense.
+- If the command changes the amount, put the new value in `amount`.
+- If the command changes the category, put the new value in `category`.
+- Do not set `title` to an empty string.
 
 --------------------------------
 EXPENSE DELETE
 --------------------------------
 
-Example:
+Examples:
 "delete lunch expense"
+"delete expense id 1"
 
-→ action = "delete"
-
-Extract:
-id OR title
-
+Return:
+action = "delete"
 
 --------------------------------
 ANALYTICS
 --------------------------------
 
-"monthly summary"
-→ action = "monthly_summary"
-
-"today spending"
-→ action = "daily_spending"
-
-"top spending category"
-→ action = "top_category"
-
-"spending trend"
-→ action = "spending_trend"
-
-"give insights"
-→ action = "insights"
-
+"monthly summary" -> action = "monthly_summary"
+"today spending" -> action = "daily_spending"
+"top spending category" -> action = "top_category"
+"spending trend" -> action = "spending_trend"
+"give insights" -> action = "insights"
 
 --------------------------------
 IMPORTANT RULES
 --------------------------------
 
-• Always return valid JSON
-• Never include explanations
-• If a field is missing return null
-• Amount must be a number
-• Category must be lowercase
+- Always return valid JSON only
+- Never include explanations
+- If a field is missing return null
+- Amount must be a positive number
+- Category must be lowercase when present
+- Use null, not an empty string, for missing `title` or `category`
 
 --------------------------------
 JSON FORMAT
 --------------------------------
 
 {{
-    "action": "",
-    "id": null,
-    "title": "",
-    "amount": null,
-    "category": "",
-    "min_amount": null,
-    "max_amount": null
+  "action": "",
+  "id": null,
+  "title": null,
+  "amount": null,
+  "category": null,
+  "min_amount": null,
+  "max_amount": null
 }}
 
 Respond ONLY with JSON.
