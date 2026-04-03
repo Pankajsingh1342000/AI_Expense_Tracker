@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from api.v1 import auth_routes, expense_routes
+from api.v1 import analytics_routes, auth_routes, budget_routes, expense_routes, expenses_crud_routes
 from core.config import settings
 from db.base import Base
 from db.database import engine
@@ -33,6 +33,9 @@ app = FastAPI(
 )
 
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(expenses_crud_routes.router, prefix="/api/v1")
+app.include_router(budget_routes.router, prefix="/api/v1")
+app.include_router(analytics_routes.router, prefix="/api/v1")
 app.include_router(expense_routes.router, prefix="/api/v1", tags=["AI Agent"])
 
 
