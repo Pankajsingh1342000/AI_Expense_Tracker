@@ -20,10 +20,13 @@ class Settings:
         self.ai_base_url = os.getenv("AI_BASE_URL", "https://openrouter.ai/api/v1")
         self.ai_api_key = os.getenv("OPENAI_API_KEY")
         self.ai_model = os.getenv("AI_MODEL", "gpt-4o-mini")
-        self.ai_timeout_seconds = float(os.getenv("AI_TIMEOUT_SECONDS", "20"))
+        default_timeout = "12" if self.environment == "development" else "8"
+        self.ai_timeout_seconds = float(os.getenv("AI_TIMEOUT_SECONDS", default_timeout))
         default_requests = "60" if self.environment == "development" else "10"
         self.ai_rate_limit_requests = int(os.getenv("AI_RATE_LIMIT_REQUESTS", default_requests))
         self.ai_rate_limit_window_seconds = int(os.getenv("AI_RATE_LIMIT_WINDOW_SECONDS", "60"))
+        default_cache_ttl = "5" if self.environment == "development" else "15"
+        self.read_cache_ttl_seconds = int(os.getenv("READ_CACHE_TTL_SECONDS", default_cache_ttl))
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
     @property
@@ -52,6 +55,8 @@ class Settings:
             raise RuntimeError("AI_RATE_LIMIT_REQUESTS must be greater than 0.")
         if self.ai_rate_limit_window_seconds <= 0:
             raise RuntimeError("AI_RATE_LIMIT_WINDOW_SECONDS must be greater than 0.")
+        if self.read_cache_ttl_seconds < 0:
+            raise RuntimeError("READ_CACHE_TTL_SECONDS must be greater than or equal to 0.")
         self.get_secret_key()
 
 

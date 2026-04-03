@@ -44,3 +44,22 @@ def test_rule_based_bought_for_phrase_parses_without_ai():
     assert parsed["action"] == "add"
     assert parsed["title"] == "groceries"
     assert parsed["amount"] == 700.0
+
+
+def test_rule_based_list_and_filter_parses_without_ai():
+    parsed_list = asyncio.run(parse_user_command("show my expenses"))
+    parsed_filter = asyncio.run(parse_user_command("show expenses above 500"))
+
+    assert parsed_list["action"] == "list"
+    assert parsed_filter["action"] == "filter"
+    assert parsed_filter["min_amount"] == 500.0
+
+
+def test_rule_based_budget_and_analytics_parses_without_ai():
+    budget = asyncio.run(parse_user_command("set food budget to 5000"))
+    summary = asyncio.run(parse_user_command("monthly summary"))
+
+    assert budget["action"] == "set_budget"
+    assert budget["category"] == "food"
+    assert budget["amount"] == 5000.0
+    assert summary["action"] == "monthly_summary"
