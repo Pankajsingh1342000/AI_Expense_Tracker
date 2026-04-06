@@ -23,6 +23,9 @@ class Settings:
         self.ai_model = os.getenv("AI_MODEL", "gpt-4o-mini")
         default_timeout = "12" if self.environment == "development" else "8"
         self.ai_timeout_seconds = float(os.getenv("AI_TIMEOUT_SECONDS", default_timeout))
+        self.ai_parse_max_tokens = int(os.getenv("AI_PARSE_MAX_TOKENS", "120"))
+        self.ai_insight_max_tokens = int(os.getenv("AI_INSIGHT_MAX_TOKENS", "220"))
+        self.ai_insight_summary_max_chars = int(os.getenv("AI_INSIGHT_SUMMARY_MAX_CHARS", "1200"))
         default_requests = "60" if self.environment == "development" else "10"
         self.ai_rate_limit_requests = int(os.getenv("AI_RATE_LIMIT_REQUESTS", default_requests))
         self.ai_rate_limit_window_seconds = int(os.getenv("AI_RATE_LIMIT_WINDOW_SECONDS", "60"))
@@ -54,6 +57,12 @@ class Settings:
             raise RuntimeError("REFRESH_TOKEN_EXPIRE_DAYS must be greater than 0.")
         if self.ai_timeout_seconds <= 0:
             raise RuntimeError("AI_TIMEOUT_SECONDS must be greater than 0.")
+        if self.ai_parse_max_tokens <= 0:
+            raise RuntimeError("AI_PARSE_MAX_TOKENS must be greater than 0.")
+        if self.ai_insight_max_tokens <= 0:
+            raise RuntimeError("AI_INSIGHT_MAX_TOKENS must be greater than 0.")
+        if self.ai_insight_summary_max_chars <= 0:
+            raise RuntimeError("AI_INSIGHT_SUMMARY_MAX_CHARS must be greater than 0.")
         if self.ai_rate_limit_requests <= 0:
             raise RuntimeError("AI_RATE_LIMIT_REQUESTS must be greater than 0.")
         if self.ai_rate_limit_window_seconds <= 0:

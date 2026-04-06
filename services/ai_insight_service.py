@@ -14,9 +14,17 @@ client = OpenAI(
 )
 
 
+def _truncate_summary(summary: str) -> str:
+    if len(summary) <= settings.ai_insight_summary_max_chars:
+        return summary
+    return summary[: settings.ai_insight_summary_max_chars].rstrip() + "\n- ..."
+
+
 def generate_insight_from_summary(summary: str) -> str:
     if not settings.ai_api_key:
         raise AIProcessingError("AI provider is not configured.")
+
+    concise_summary = _truncate_summary(summary)
 
     try:
         response = client.chat.completions.create(
@@ -28,6 +36,7 @@ def generate_insight_from_summary(summary: str) -> str:
                         "You are a financial advisor for users in India. "
                         "All monetary amounts are in Indian Rupees (INR). "
                         "Give short, practical insights and suggestions. "
+                        "Limit the answer to 4 concise bullet points. "
                         "When mentioning money, use Rs. or INR."
                     ),
                 },
@@ -35,12 +44,13 @@ def generate_insight_from_summary(summary: str) -> str:
                     "role": "user",
                     "content": (
                         "User spending summary (all amounts are in Indian Rupees, INR):\n"
-                        f"{summary}\n\n"
+                        f"{concise_summary}\n\n"
                         "Give concise financial insights. Use Rs. or INR when referring to money."
                     ),
                 },
             ],
-            temperature=0.5,
+            temperature=0.3,
+            max_tokens=settings.ai_insight_max_tokens,
         )
         content = response.choices[0].message.content
         if not content:

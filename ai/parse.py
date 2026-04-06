@@ -237,6 +237,7 @@ async def parse_user_command(user_command: str) -> dict:
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
+            max_tokens=settings.ai_parse_max_tokens,
             response_format={"type": "json_object"},
         )
         return _extract_validated_command(response.choices[0].message.content)
