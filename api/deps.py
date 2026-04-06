@@ -5,10 +5,11 @@ from typing import Deque, Dict, Tuple
 
 from fastapi import Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jose import JWTError
 from sqlalchemy.orm import Session
 
-from core.config import ALGORITHM, SECRET_KEY, settings
+from core.config import settings
+from core.security import decode_token
 from db.database import SessionLocal
 from models.user import User
 
@@ -33,7 +34,9 @@ def get_current_user(
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode_token(token)
+        if payload.get("type") != "access":
+            raise credentials_exception
         user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
