@@ -23,7 +23,7 @@ class Settings:
         self.ai_model = os.getenv("AI_MODEL", "gpt-4o-mini")
         default_timeout = "12" if self.environment == "development" else "8"
         self.ai_timeout_seconds = float(os.getenv("AI_TIMEOUT_SECONDS", default_timeout))
-        self.ai_parse_max_tokens = int(os.getenv("AI_PARSE_MAX_TOKENS", "120"))
+        self.ai_parse_max_tokens = int(os.getenv("AI_PARSE_MAX_TOKENS", "400"))
         self.ai_insight_max_tokens = int(os.getenv("AI_INSIGHT_MAX_TOKENS", "220"))
         self.ai_insight_summary_max_chars = int(os.getenv("AI_INSIGHT_SUMMARY_MAX_CHARS", "1200"))
         default_requests = "60" if self.environment == "development" else "10"

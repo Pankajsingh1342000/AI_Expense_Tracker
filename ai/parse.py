@@ -26,7 +26,31 @@ class AIProcessingError(Exception):
 def _extract_validated_command(raw_content: str) -> Dict[str, Any]:
     raw_json = json.loads(raw_content)
     validated_data = AIResponse(**raw_json)
-    return validated_data.model_dump()
+    result = validated_data.model_dump()
+
+    # Guard: if AI returned action=add but forgot the title, treat as chat
+    # This happens when the user says something conversational and the AI
+    # misclassifies it as an add command.
+    if result.get("action") == "add" and not result.get("title"):
+        logger.warning(
+            "AI returned action='add' with no title — downgrading to 'chat'. "
+            "Raw AI output: %s", raw_content
+        )
+        result["action"] = "chat"
+        if not result.get("reply"):
+            result["reply"] = "I didn't catch what expense to add. Could you tell me the name and amount?"
+
+    # Guard: if AI returned action=update/delete but has no id AND no title
+    if result.get("action") in {"update", "delete"} and not result.get("id") and not result.get("title"):
+        logger.warning(
+            "AI returned action='%s' with no id or title — downgrading to 'chat'. "
+            "Raw AI output: %s", result.get("action"), raw_content
+        )
+        result["action"] = "chat"
+        if not result.get("reply"):
+            result["reply"] = "Which expense did you mean? Please mention the name or ID."
+
+    return result
 
 
 def _build_validated_command(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -216,22 +240,31 @@ def _rule_based_parse(user_command: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-async def parse_user_command(user_command: str) -> dict:
+async def parse_user_command(
+    user_command: str,
+    financial_context: str = "",
+    history: list | None = None,
+) -> dict:
     if not settings.ai_api_key:
         raise AIProcessingError("AI provider is not configured.")
 
-    prompt = get_expense_prompt(user_command)
+    prompt = get_expense_prompt(user_command, financial_context)
+
+    # Build messages: system + conversation history + current user message
+    messages = [
+        {
+            "role": "system",
+            "content": "Return valid JSON only for the expense command.",
+        }
+    ]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": prompt})
 
     try:
         response = await client.chat.completions.create(
             model=settings.ai_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Return valid JSON only for the expense command.",
-                },
-                {"role": "user", "content": prompt},
-            ],
+            messages=messages,
             temperature=0,
             max_tokens=settings.ai_parse_max_tokens,
             response_format={"type": "json_object"},
@@ -249,3 +282,47 @@ async def parse_user_command(user_command: str) -> dict:
     except Exception as exc:
         logger.exception("Unexpected error while parsing user command")
         raise AIProcessingError("Unexpected AI parsing failure.") from exc
+
+
+async def generate_reply(user_command: str, action_result: dict, financial_context: str = "") -> str:
+    """
+    Generate a natural language reply AFTER the action has been executed,
+    so the reply accurately reflects what actually happened.
+    """
+    if not settings.ai_api_key:
+        return ""
+
+    import json as _json
+    result_summary = _json.dumps(action_result, default=str)
+
+    system_prompt = (
+        "You are a friendly personal finance assistant for a user in India. "
+        "All amounts are in Indian Rupees (INR). "
+        "Reply in 1-3 sentences, warmly and conversationally. "
+        "If the result shows 'clarification_needed', tell the user you found multiple matches "
+        "and list them clearly (with IDs and amounts) so they can pick one. "
+        "Never say 'I don't have access to your data'."
+    )
+
+    context_block = f"\n{financial_context}\n" if financial_context else ""
+    user_prompt = (
+        f"{context_block}"
+        f"The user said: \"{user_command}\"\n\n"
+        f"The system result after executing the action was:\n{result_summary}\n\n"
+        "Now reply to the user naturally based on what actually happened."
+    )
+
+    try:
+        response = await client.chat.completions.create(
+            model=settings.ai_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.4,
+            max_tokens=settings.ai_insight_max_tokens,
+        )
+        return response.choices[0].message.content or ""
+    except OpenAIError:
+        logger.warning("Could not generate conversational reply")
+        return ""

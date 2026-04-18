@@ -6,6 +6,7 @@ class AIQuery(BaseModel):
 
 class AIResponse(BaseModel):
     action: str
+    reply: Optional[str] = None
     id: Optional[int] = None
     title: Optional[str] = None
     amount: Optional[float] = None
