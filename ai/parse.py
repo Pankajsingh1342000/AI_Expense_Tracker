@@ -217,10 +217,6 @@ def _rule_based_parse(user_command: str) -> Optional[Dict[str, Any]]:
 
 
 async def parse_user_command(user_command: str) -> dict:
-    rule_based_result = _rule_based_parse(user_command)
-    if rule_based_result is not None:
-        return rule_based_result
-
     if not settings.ai_api_key:
         raise AIProcessingError("AI provider is not configured.")
 
