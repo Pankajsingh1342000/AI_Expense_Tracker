@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from openai import APITimeoutError, AsyncOpenAI, OpenAIError
 from pydantic import ValidationError
 
-from ai.prompt import get_expense_prompt
+from ai.prompt import get_system_prompt
 from core.config import settings
 from schemas.ai import AIResponse
 
@@ -248,24 +248,19 @@ async def parse_user_command(
     if not settings.ai_api_key:
         raise AIProcessingError("AI provider is not configured.")
 
-    prompt = get_expense_prompt(user_command, financial_context)
+    system_prompt = get_system_prompt(financial_context)
 
     # Build messages: system + conversation history + current user message
-    messages = [
-        {
-            "role": "system",
-            "content": "Return valid JSON only for the expense command.",
-        }
-    ]
+    messages = [{"role": "system", "content": system_prompt}]
     if history:
         messages.extend(history)
-    messages.append({"role": "user", "content": prompt})
+    messages.append({"role": "user", "content": user_command})
 
     try:
         response = await client.chat.completions.create(
             model=settings.ai_model,
             messages=messages,
-            temperature=0,
+            temperature=0.3,
             max_tokens=settings.ai_parse_max_tokens,
             response_format={"type": "json_object"},
         )
@@ -284,7 +279,7 @@ async def parse_user_command(
         raise AIProcessingError("Unexpected AI parsing failure.") from exc
 
 
-async def generate_reply(user_command: str, action_result: dict, financial_context: str = "") -> str:
+async def generate_reply(user_command: str, action_result: dict, financial_context: str = "", history: list | None = None) -> str:
     """
     Generate a natural language reply AFTER the action has been executed,
     so the reply accurately reflects what actually happened.
@@ -305,20 +300,23 @@ async def generate_reply(user_command: str, action_result: dict, financial_conte
     )
 
     context_block = f"\n{financial_context}\n" if financial_context else ""
+    system_prompt = f"{system_prompt}\n{context_block}"
+    
     user_prompt = (
-        f"{context_block}"
-        f"The user said: \"{user_command}\"\n\n"
+        f"The user just said: \"{user_command}\"\n\n"
         f"The system result after executing the action was:\n{result_summary}\n\n"
         "Now reply to the user naturally based on what actually happened."
     )
 
+    messages = [{"role": "system", "content": system_prompt}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": user_prompt})
+
     try:
         response = await client.chat.completions.create(
             model=settings.ai_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+            messages=messages,
             temperature=0.4,
             max_tokens=settings.ai_insight_max_tokens,
         )

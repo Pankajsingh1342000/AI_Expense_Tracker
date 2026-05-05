@@ -74,6 +74,7 @@ async def agentic_expense_handler(
             ) from exc
     else:
         financial_context = ""  # not needed for rule-based path
+        history = None
 
     action = parsed_command.get("action")
     parse_reply = parsed_command.get("reply")  # may be None for rule-based
@@ -122,7 +123,9 @@ async def agentic_expense_handler(
             #   c) handler returned an error
             if not financial_context:
                 financial_context = build_financial_context(db, user_id)
-            ai_reply = await generate_reply(user_input.query, result_dict, financial_context)
+            if history is None:
+                history = conversation_memory.get(user_id)
+            ai_reply = await generate_reply(user_input.query, result_dict, financial_context, history)
 
         # ── Invalidate context cache after writes ─────────────────────────────
         if action in _WRITE_ACTIONS and not is_clarification and not has_error:

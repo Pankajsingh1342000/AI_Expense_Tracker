@@ -14,14 +14,21 @@ def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
         "metro": "transport", "zomato": "food", "swiggy": "food",
         "coffee": "beverages", "starbucks": "beverages",
         "blinkit": "groceries", "zepto": "groceries",
-        "groceries": "food", "pizza": "food", "dinner": "food", "lunch": "food"
+        "groceries": "groceries", "pizza": "food", "dinner": "food", "lunch": "food",
+        "electricity": "bills", "rent": "bills", "water": "bills", "internet": "bills",
+        "movie": "entertainment", "clothes": "shopping", "amazon": "shopping",
+        "pharmacy": "health"
     }
 
     CATEGORY_NORMALIZATION_MAP = {
-        "groceries": "food",
-        "beverage": "beverages",
-        "drinks": "beverages",
-        "transportation": "transport",
+        "dining": "food", "restaurant": "food", "lunch": "food", "dinner": "food", "breakfast": "food", "snacks": "food",
+        "grocery": "groceries",
+        "drinks": "beverages", "beverage": "beverages", "coffee": "beverages", "tea": "beverages",
+        "transportation": "transport", "cab": "transport", "taxi": "transport", "flight": "transport", "train": "transport", "bus": "transport",
+        "electricity": "bills", "rent": "bills", "internet": "bills", "water": "bills", "utilities": "bills",
+        "movie": "entertainment", "movies": "entertainment", "games": "entertainment", "concert": "entertainment",
+        "clothes": "shopping", "clothing": "shopping", "electronics": "shopping", "amazon": "shopping",
+        "pharmacy": "health", "medicine": "health", "doctor": "health", "hospital": "health"
     }
     
     title = expense_data.get("title")
@@ -34,9 +41,20 @@ def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
     if category:
         category = CATEGORY_NORMALIZATION_MAP.get(category.lower(), category.lower())
     
-    # 2. If no category or LLM gave "misc", try title-based lookup
-    if not category or category == "misc":
-        category = TITLE_TO_CATEGORY_MAP.get(title.lower(), "misc")
+    # Define strict allowed categories
+    ALLOWED_CATEGORIES = {"food", "transport", "shopping", "entertainment", "bills", "groceries", "health", "beverages", "misc"}
+
+    # 2. If category is invalid or misc, try title-based lookup
+    if not category or category not in ALLOWED_CATEGORIES or category == "misc":
+        t_lower = title.lower()
+        matched_cat = category if category in ALLOWED_CATEGORIES else "misc"
+        for k, v in TITLE_TO_CATEGORY_MAP.items():
+            if k in t_lower:
+                matched_cat = v
+                # Clean up the title to just the recognized keyword if it's a messy rule-based extract
+                expense_data["title"] = k.capitalize()
+                break
+        category = matched_cat
 
     expense_data["category"] = category
     
