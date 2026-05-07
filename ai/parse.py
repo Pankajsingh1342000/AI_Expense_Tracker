@@ -60,6 +60,7 @@ def _build_validated_command(payload: Dict[str, Any]) -> Dict[str, Any]:
         "title": None,
         "amount": None,
         "category": None,
+        "description": None,
         "min_amount": None,
         "max_amount": None,
     }

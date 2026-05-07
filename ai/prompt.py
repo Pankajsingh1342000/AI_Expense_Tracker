@@ -54,6 +54,9 @@ ALWAYS use action="add". NEVER ask the user for clarification. Auto-infer as fol
 - Amount must be a positive number.
 - Category MUST be exactly one of the following: food, transport, shopping, entertainment, bills, groceries, health, beverages, misc. Do not invent new categories.
 - Extract a clean title that represents the item or merchant. Do not include verbs or prepositions. (e.g. if the user says "spent 300 on zomato for food", the title is "zomato", not "spent on zomato").
+- If the user specifies a title explicitly with phrases like "title <name>", "titled <name>", or "with title <name>", use that EXACT name as the title — do NOT override or simplify it.
+- If the user specifies a category explicitly with phrases like "in <category> category", "category <name>", or "under <category>", use that EXACT category (normalized to the allowed list). If it cannot be mapped to an allowed category, use "misc".
+- Extract description from phrases like "description as <text>", "note: <text>", "with note <text>", "with description <text>", "desc: <text>". Set description to null if not provided.
 - The "reply" field MUST always be a warm, natural, conversational response in English.
   Mention specific numbers from the user's data when relevant.
   Never say "I don't have access to your data" — you do, it's shown above.
@@ -66,6 +69,7 @@ Return this exact shape:
   "title": null,
   "amount": null,
   "category": null,
+  "description": null,
   "min_amount": null,
   "max_amount": null
 }}

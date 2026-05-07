@@ -11,6 +11,7 @@ class AIResponse(BaseModel):
     title: Optional[str] = None
     amount: Optional[float] = None
     category: Optional[str] = None
+    description: Optional[str] = None
     min_amount: Optional[float] = None
     max_amount: Optional[float] = None
 

@@ -28,7 +28,11 @@ def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
         "electricity": "bills", "rent": "bills", "internet": "bills", "water": "bills", "utilities": "bills",
         "movie": "entertainment", "movies": "entertainment", "games": "entertainment", "concert": "entertainment",
         "clothes": "shopping", "clothing": "shopping", "electronics": "shopping", "amazon": "shopping",
-        "pharmacy": "health", "medicine": "health", "doctor": "health", "hospital": "health"
+        "pharmacy": "health", "medicine": "health", "doctor": "health", "hospital": "health",
+        # Common user-typed informal categories
+        "cashout": "misc", "cash out": "misc", "cash": "misc",
+        "upi": "misc", "payment": "misc", "transfer": "misc", "wallet": "misc",
+        "personal": "misc", "other": "misc",
     }
     
     title = expense_data.get("title")
@@ -44,16 +48,14 @@ def add_expense(db: Session, user_id: int, expense_data: dict) -> Expense:
     # Define strict allowed categories
     ALLOWED_CATEGORIES = {"food", "transport", "shopping", "entertainment", "bills", "groceries", "health", "beverages", "misc"}
 
-    # 2. If category is invalid or misc, try title-based lookup
-    if not category or category not in ALLOWED_CATEGORIES or category == "misc":
+    # 2. If category is still not valid, try title-based lookup — but NEVER overwrite the title itself
+    if not category or category not in ALLOWED_CATEGORIES:
         t_lower = title.lower()
-        matched_cat = category if category in ALLOWED_CATEGORIES else "misc"
+        matched_cat = "misc"
         for k, v in TITLE_TO_CATEGORY_MAP.items():
             if k in t_lower:
                 matched_cat = v
-                # Clean up the title to just the recognized keyword if it's a messy rule-based extract
-                expense_data["title"] = k.capitalize()
-                break
+                break  # only infer category, do NOT touch expense_data["title"]
         category = matched_cat
 
     expense_data["category"] = category

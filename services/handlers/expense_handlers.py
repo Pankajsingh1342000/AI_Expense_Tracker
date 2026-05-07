@@ -55,7 +55,7 @@ def handle_update(db: Session, current_user: User, parsed: dict):
     else:
         return {"error": "Expense ID or title is required for an update."}
 
-    update_data = {k: v for k, v in parsed.items() if k in ["title", "amount", "category"]}
+    update_data = {k: v for k, v in parsed.items() if k in ["title", "amount", "category", "description"]}
     updated_expense = expense_service.update_expense(db, expense, update_data)
     invalidate_user_cache(current_user.id)
     return {"message": "Expense updated successfully", "expense": ExpenseResponse.model_validate(updated_expense)}
